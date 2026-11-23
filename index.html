@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>GestoTips</title>
-<link rel="icon" type="image/png" href="./icon.png?v=1.10.0">
-<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.10.0">
+<link rel="icon" type="image/png" href="./icon.png?v=1.11.0">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.11.0">
 <style>:root{color-scheme:light;--bg:#f7f8fd;--tx:#28377e;--mu:#566598;--ln:#303f91;--surface:#fff;--soft:#f0f2fc;--border:#d4daf1;--field:#b6bfdf;--on:#fff;--red:#b42318;--green:#17734a}
 :root[data-theme=dark]{color-scheme:dark;--bg:#10152c;--tx:#e5e9ff;--mu:#adb8e5;--ln:#a1afff;--surface:#1b2447;--soft:#232f59;--border:#425080;--field:#6371a0;--on:#10152c;--red:#ff9992;--green:#84dbab}
 *{box-sizing:border-box}
@@ -133,13 +133,19 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 [data-worker-contact-options] label{margin-bottom:8px}
 
 .worker-contact-actions:empty{display:none}
+/* Aspecte comú de les apps Gesto: requadre principal amb fons blau clar (com «Nova comanda») i blocs blancs a dins. */
+:root{--main-bg:#eaf0ff;--main-border:#afbfeb}
+:root[data-theme=dark]{--main-bg:#202e55;--main-border:#516798}
+.main-card{background:var(--main-bg);border-color:var(--main-border)}
+.main-card .card{background:var(--surface);box-shadow:none;border-radius:14px;padding:16px;margin:12px 0 0}
+.main-card .card h3:first-child{margin-top:0}
 </style>
 <link rel="manifest" href="./manifest.webmanifest">
 </head>
 <body>
 <main>
 <header class="topbar">
-  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.10.0<span id="sync-state" role="status"></span></div></div>
+  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.11.0<span id="sync-state" role="status"></span></div></div>
   <div class="top-actions">
     <div class="menu-anchor">
       <button id="menu-toggle" type="button" aria-label="Menú" aria-expanded="false" aria-controls="menu-panel" hidden><span aria-hidden="true">☰</span><span class="top-action-label" aria-hidden="true">Menú</span></button>
@@ -552,7 +558,7 @@ function renderTipsHistory(source, historyYear, today) {
   const totals = [...workers].map(([id,name]) => ({name,cents:amounts.get(id) ?? 0}))
     .sort((a,b) => collator.compare(a.name,b.name));
   const summary = rows => payoutSummary(rows,id => workers.get(id) ?? '');
-  return {year:historyYear, html:'<section class="card"><h2>Històric</h2><nav aria-label="Anys del repartiment">'+
+  return {year:historyYear, html:'<section class="card main-card"><h2>Històric</h2><nav aria-label="Anys del repartiment">'+
     years.map(year => '<button type="button" data-history-year="'+year+'" aria-pressed="'+(year===historyYear)+'">'+year+'</button>').join('')+'</nav>'+
     '<h3>Total anual per treballador</h3>'+
     (totals.length ? '<ul class="annual-totals">'+totals.map(row => '<li><span>'+escapeHtml(row.name)+'</span><strong>'+formatMoney(row.cents)+'</strong></li>').join('')+'</ul>'
@@ -614,7 +620,7 @@ function mountTipsViewer(request, initial) {
       content.innerHTML = result.html;
       return;
     }
-    content.innerHTML = '<section class="card"><h2>Repartiment actual</h2>'+
+    content.innerHTML = '<section class="card main-card"><h2>Repartiment actual</h2>'+
       (current ? '<p>'+fullDate.format(dayOf(current.date))+'</p>'+
         (can.pot ? '<form id="viewer-pot"><div class="grid"><label>Pot de propines (€)'+
         '<input name="amount" type="text" inputmode="decimal" maxlength="32" placeholder="0,00" required value="'+
@@ -830,19 +836,19 @@ async function mountApp(request = localRequest, initial) {
       const locked = limited ? ' disabled' : '';
       const amountField = !limited || can.pot ? '<input id="amount" type="text" inputmode="decimal" maxlength="32" placeholder="0,00" value="'+escapeHtml(amount)+'">'
         : '<input type="text" value="'+escapeHtml(amount)+'" readonly>';
-      content.innerHTML = '<section class="card"><h2>Repartiment</h2><div class="grid period-fields">'+
+      content.innerHTML = '<section class="card main-card"><h2>Repartiment</h2><section class="card"><h3>Dates i pot de propines</h3><div class="grid period-fields">'+
         '<label>Data inicial<input id="period-start" type="date" value="'+start+'" min="'+earliestStart()+'"'+locked+'></label>'+
         '<label>Data final<input id="period-date" type="date" value="'+date+'" min="'+start+'"'+locked+'></label>'+
         (!limited || can.pot || can.view ? '<label>Pot de propines (€)'+amountField+'</label>' : '')+'</div>'+
         (limited ? '<p class="meta">Pots marcar els dies oberts i els punts de cada treballador. Les dates i el tancament els fa l’administrador.</p>' : '')+
         '</section>'+
-        '<section class="card"><h2>Dies i treballadors</h2>'+
+        '<section class="card"><h3>Dies i treballadors</h3>'+
         (!activeWorkers().length ? '<p class="meta">Afegeix persones a GestoAdmin per començar.</p>' : '')+
         days.map(renderDay).join('')+'</section>'+
-        (!limited || can.view ? '<section class="card"><h2>Resultat</h2>'+
+        (!limited || can.view ? '<section class="card"><h3>Resultat</h3>'+
         '<div class="result-meta"><div><span>Parts totals</span><strong id="total-points"></strong></div>'+
         '<div><span>Valor per punt</span><strong id="per-point"></strong></div></div>'+
-        '<div id="result"></div>'+(limited ? '' : '<button id="close-period" class="primary" type="button">Tanca el repartiment</button>')+'</section>' : '');
+        '<div id="result"></div>'+(limited ? '' : '<button id="close-period" class="primary" type="button">Tanca el repartiment</button>')+'</section>' : '')+'</section>';
       updateResult();
     } else {
       content.innerHTML = renderHistory();
