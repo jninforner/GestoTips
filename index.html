@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>GestoTips</title>
-<link rel="icon" type="image/png" href="./icon.png?v=1.11.1">
-<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.11.1">
+<link rel="icon" type="image/png" href="./icon.png?v=1.10.1">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.10.1">
 <style>:root{color-scheme:light;--bg:#f7f8fd;--tx:#28377e;--mu:#566598;--ln:#303f91;--surface:#fff;--soft:#f0f2fc;--border:#d4daf1;--field:#b6bfdf;--on:#fff;--red:#b42318;--green:#17734a}
 :root[data-theme=dark]{color-scheme:dark;--bg:#10152c;--tx:#e5e9ff;--mu:#adb8e5;--ln:#a1afff;--surface:#1b2447;--soft:#232f59;--border:#425080;--field:#6371a0;--on:#10152c;--red:#ff9992;--green:#84dbab}
 *{box-sizing:border-box}
@@ -31,7 +31,7 @@ button:hover,.button:hover{background:var(--soft)}
 button:disabled{opacity:.55;cursor:not-allowed}
 .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px;margin-bottom:12px}
 .row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
-.item{border-top:1px solid var(--border);padding:12px 0}
+.item{border-top:1px solid var(--border);padding:8px 0}
 .item:last-child{padding-bottom:0}
 .meta{color:var(--mu);font-size:14px}
 .error,.remove{color:var(--red)}
@@ -47,9 +47,9 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .top-actions button{gap:7px;min-height:42px;padding:8px 12px;white-space:nowrap}
 .top-actions button span:first-child{font-size:18px;line-height:1}
 .menu-anchor{position:relative}
-#menu-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:5;width:192px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 30px rgba(40,55,126,.15);padding:10px}
+#menu-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:5;width:max-content;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 30px rgba(40,55,126,.15);padding:10px}
 #tabs{display:grid;gap:6px;margin:0 0 6px}
-#menu-panel button{width:100%;justify-content:flex-start}
+#menu-panel button{width:100%;justify-content:flex-start;white-space:nowrap}
 @media(max-width:430px){
   .topbar,.top-actions{gap:6px}
   .top-actions button{font-size:14px;padding:7px 9px}
@@ -77,15 +77,18 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 }
 
 
-.tip-day{border-top:1px solid var(--border);padding:10px 0}
-.tip-day>summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:40px}
+.tip-day{border-top:1px solid var(--border);padding:2px 0}
+.tip-day>summary{cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;min-height:36px;padding:2px 4px}
+.tip-day>summary:hover{background:var(--soft);border-radius:8px}
+.tip-day[open]{padding-bottom:8px}
 .tip-day>summary strong:first-letter{text-transform:uppercase}
 .tip-day>summary::before{content:"+";font-weight:700}
 .tip-day[open]>summary::before{content:"−"}
 .tip-day>summary>strong{flex:1}
-.opening{display:flex;align-items:center;gap:8px;margin:8px 0 12px}
+.opening{display:flex;align-items:center;gap:8px;margin:4px 0 6px}
 .opening input{width:20px;min-height:20px;margin:0}
-.assignment{display:grid;grid-template-columns:minmax(0,1fr) minmax(96px, 125px) auto;align-items:center;gap:8px;margin:6px 0}
+.assignment{display:grid;grid-template-columns:minmax(0,1fr) minmax(96px, 125px) auto;align-items:center;gap:6px;margin:2px 0}
+.assignment input{min-height:40px;height:40px}
 .points-control{display:grid;grid-template-columns:minmax(0,1fr) 40px;align-items:stretch}
 .points-control input{padding-inline:8px;border-radius:10px 0 0 10px}
 .point-arrows{display:grid;grid-template-rows:repeat(2,minmax(25px,1fr))}
@@ -93,21 +96,24 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 .point-arrows button+button{border-top:0;border-radius:0 0 10px 0}
 .worker-state{display:block;color:var(--mu);font-size:14px}
 .worker-state.is-active{color:var(--green)}
-.add-worker{margin-top:12px}
+.add-worker{margin-top:6px}
+.icon-button{min-width:0;width:36px;min-height:36px;padding:0}
+.icon-button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.icon-button.remove{border-color:var(--red)}
 .result-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .result-meta div{background:var(--soft);padding:10px 12px;border-radius:10px;display:grid}
 .result-meta span{color:var(--mu);font-size:14px}
 .result-meta strong{font-size:22px;font-variant-numeric:tabular-nums}
 .payout-list{padding:0;list-style:none}
-.payout-list li{display:grid;grid-template-columns:minmax(0,1fr) 3rem 6.5rem;gap:8px;padding:8px 0;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
+.payout-list li{display:grid;grid-template-columns:minmax(0,1fr) auto 6.5rem;gap:8px;padding:4px 0;white-space:nowrap;border-bottom:1px solid var(--border);font-variant-numeric:tabular-nums}
 .payout-list li strong{text-align:right}
 .worker-form{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:10px;margin-bottom:12px}
-.history-day{font-size:14px;padding:8px 0;border-top:1px solid var(--border)}
+.history-day{font-size:14px;padding:4px 0;border-top:1px solid var(--border)}
 .history-day p{margin:3px 0}
 
 [data-history-year][aria-pressed=true]{background:var(--ln);color:var(--on)}
 .annual-totals{list-style:none;padding:0;margin:0 0 20px}
-.annual-totals li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--border)}
+.annual-totals li{display:flex;justify-content:space-between;gap:12px;padding:4px 0;border-bottom:1px solid var(--border)}
 
 @media(max-width:480px){
   .period-fields{grid-template-columns:minmax(0,1fr)}
@@ -147,7 +153,7 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 <body>
 <main>
 <header class="topbar">
-  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.11.1<span id="sync-state" role="status"></span></div></div>
+  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.10.1<span id="sync-state" role="status"></span></div></div>
   <div class="top-actions">
     <div class="menu-anchor">
       <button id="menu-toggle" type="button" aria-label="Menú" aria-expanded="false" aria-controls="menu-panel" hidden><span aria-hidden="true">☰</span><span class="top-action-label" aria-hidden="true">Menú</span></button>
@@ -533,6 +539,7 @@ async function localRequest(body) {
   return data;
 }
 
+const trashIcon = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M9 7V4h6v3"/><path d="M6 7l1 13h10l1-13"/><path d="M10 11v6M14 11v6"/></svg>';
 const tipsCollator = new Intl.Collator('ca', {sensitivity:'base'});
 const madridToday = () => new Intl.DateTimeFormat('en-CA', {
   timeZone:'Europe/Madrid', year:'numeric', month:'2-digit', day:'2-digit'
@@ -818,7 +825,7 @@ async function mountApp(request = localRequest, initial) {
         '" value="'+escapeHtml(row.text ?? (row.units === null ? '' : String(row.units / 4)).replace('.', ','))+'"><span class="point-arrows">'+
         '<button type="button" data-point-step="1" aria-label="Puja 0,25 punts a '+escapeHtml(nameOf(row.id))+'">▴</button>'+
         '<button type="button" data-point-step="-1" aria-label="Baixa 0,25 punts a '+escapeHtml(nameOf(row.id))+'">▾</button>'+
-        '</span></div><button type="button" data-remove="'+row.id+'" data-index="'+index+'" aria-label="Treu '+escapeHtml(nameOf(row.id))+'">Treu</button></div>'
+        '</span></div><button type="button" class="icon-button remove" data-remove="'+row.id+'" data-index="'+index+'" title="Treu" aria-label="Treu '+escapeHtml(nameOf(row.id))+'">'+trashIcon+'</button></div>'
       ).join('')+(available.length ? '<label class="add-worker">Afegeix un treballador<select data-add="'+index+'"><option value="">Tria una persona</option>'+
         available.map(worker => '<option value="'+worker.id+'">'+escapeHtml(worker.name)+'</option>').join('')+'</select></label>' : '') : '')+
       '</details>';
