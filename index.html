@@ -4,9 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
-<title>NexaTips</title>
-<link rel="icon" type="image/png" href="./icon.png?v=1.6.4">
-<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.6.4">
+<title>GestoTips</title>
+<link rel="icon" type="image/png" href="./icon.png?v=1.8.0">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.8.0">
 <style>:root{color-scheme:light;--bg:#f7f8fd;--tx:#28377e;--mu:#566598;--ln:#303f91;--surface:#fff;--soft:#f0f2fc;--border:#d4daf1;--field:#b6bfdf;--on:#fff;--red:#b42318;--green:#17734a}
 :root[data-theme=dark]{color-scheme:dark;--bg:#10152c;--tx:#e5e9ff;--mu:#adb8e5;--ln:#a1afff;--surface:#1b2447;--soft:#232f59;--border:#425080;--field:#6371a0;--on:#10152c;--red:#ff9992;--green:#84dbab}
 *{box-sizing:border-box}
@@ -109,6 +109,11 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 .annual-totals{list-style:none;padding:0;margin:0 0 20px}
 .annual-totals li{display:flex;justify-content:space-between;gap:12px;padding:7px 0;border-bottom:1px solid var(--border)}
 
+@media(max-width:480px){
+  .period-fields{grid-template-columns:minmax(0,1fr)}
+  .period-fields input{display:block;width:100%;min-width:0;max-width:100%;height:48px}
+}
+
 .worker-profiles .worker-profile-item{border-top:1px solid var(--border);padding:10px 0}
 .worker-profile-item>summary,.worker-profile-inactive>summary{cursor:pointer;min-height:34px;display:flex;align-items:center;justify-content:space-between;gap:12px}
 .worker-profile-item>summary::before,.worker-profile-inactive>summary::before{content:"+"}
@@ -128,18 +133,13 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 [data-worker-contact-options] label{margin-bottom:8px}
 
 .worker-contact-actions:empty{display:none}
-
-@media(max-width:480px){
-  .period-fields{grid-template-columns:minmax(0,1fr)}
-  .period-fields input{display:block;width:100%;min-width:0;max-width:100%;height:48px}
-}
 </style>
 <link rel="manifest" href="./manifest.webmanifest">
 </head>
 <body>
 <main>
 <header class="topbar">
-  <div class="brand"><h1>NexaTips</h1><div class="meta version">Versió 1.8.0<span id="sync-state" role="status"></span></div></div>
+  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.8.0<span id="sync-state" role="status"></span></div></div>
   <div class="top-actions">
     <div class="menu-anchor">
       <button id="menu-toggle" type="button" aria-label="Menú" aria-expanded="false" aria-controls="menu-panel" hidden><span aria-hidden="true">☰</span><span class="top-action-label" aria-hidden="true">Menú</span></button>
@@ -356,7 +356,7 @@ function renderWorkerProfiles(workers, escapeHtml) {
     '<label>Correu<input name="email" type="email" maxlength="254" value="'+escapeHtml(worker?.email ?? '')+'"></label>'+
     '<label>Telèfon<input name="phone" type="tel" maxlength="48" value="'+escapeHtml(worker?.phone ?? '')+'"></label></div>'+
     '<label class="worker-profile-option"><input type="checkbox" name="active" '+(!worker || worker.active ? 'checked' : '')+'> '+(worker && !worker.active ? 'Reactiva per al repartiment de propines' : 'Actiu per al repartiment de propines')+'</label>'+
-    '<label class="worker-profile-option"><input type="checkbox" name="tipsView" '+(worker?.tipsView ? 'checked' : '')+'> Pot consultar el repartiment actual de NexaTips</label>'+
+    '<label class="worker-profile-option"><input type="checkbox" name="tipsView" '+(worker?.tipsView ? 'checked' : '')+'> Pot consultar el repartiment actual de GestoTips</label>'+
     '<button class="primary">'+(worker ? 'Desa la fitxa' : 'Afegeix el treballador')+'</button></form>';
   const active = sorted.filter(worker => worker.active);
   const inactive = sorted.filter(worker => !worker.active);
@@ -427,7 +427,7 @@ function bindWorkerContacts(container) {
     fields.contactName.value = (contact.name || contact.email?.[0] || contact.tel?.[0] || '').slice(0,160);
     fields.contactUid.value = contact.uid ?? '';
     updateContactStatus(form,'Revisa les dades del contacte i desa la fitxa.'+
-      (reviewAccess ? ' Revisa si vols autoritzar el correu nou a NexaTips.' : ''));
+      (reviewAccess ? ' Revisa si vols autoritzar el correu nou a GestoTips.' : ''));
   }
 
   container.addEventListener('click',async event => {
@@ -463,7 +463,7 @@ function bindWorkerContacts(container) {
     if (input.matches('[data-worker-contact-field]') && input.value) {
       const field = input.dataset.workerContactField;
       if (setWorkerContactField(input.form,field,input.value))
-        updateContactStatus(input.form,'Revisa si vols autoritzar el correu nou a NexaTips abans de desar.');
+        updateContactStatus(input.form,'Revisa si vols autoritzar el correu nou a GestoTips abans de desar.');
       input.form.elements[field].value = input.value;
     } else if (input.matches('[data-worker-contact-choice]') && input.value) {
       const contact = contactsByForm.get(input.form)?.[Number(input.value)];
@@ -1057,7 +1057,7 @@ async function startStaffApp(apiOrigin, mountApp, apiPath = "/api") {
     try {
       const link = new URL(value.trim());
       if (((link.origin === 'https://'+auth.app.options.authDomain && link.pathname === '/__/auth/action') ||
-           (link.origin === 'https://jninforner.github.io' && ['/NexaTips/','/NexaComandes/','/tracacomandes/'].includes(link.pathname))) && link.searchParams.get('mode') === mode) {
+           (link.origin === 'https://jninforner.github.io' && ['/GestoTips/','/GestoComandes/','/NexaTips/','/NexaComandes/','/tracacomandes/'].includes(link.pathname))) && link.searchParams.get('mode') === mode) {
         return link.searchParams.get('oobCode');
       }
     } catch {
@@ -1071,7 +1071,7 @@ async function startStaffApp(apiOrigin, mountApp, apiPath = "/api") {
     void withFeedback(async () => {
       const code = emailActionCode(resetForm.elements.link.value,'resetPassword');
       if (!code) {
-        show('Enganxa l’enllaç complet del correu de restabliment de contrasenya de NexaTips.');
+        show('Enganxa l’enllaç complet del correu de restabliment de contrasenya de GestoTips.');
         return;
       }
       try {
@@ -1130,7 +1130,7 @@ async function startStaffApp(apiOrigin, mountApp, apiPath = "/api") {
       if (!user && actionMode !== 'verifyEmail') return;
       const code = emailActionCode(repair.elements.link.value,'verifyEmail');
       if (!code) {
-        show('Enganxa l’enllaç complet del correu de verificació de NexaComandes.');
+        show('Enganxa l’enllaç complet del correu de verificació de GestoComandes.');
         return;
       }
       try {
