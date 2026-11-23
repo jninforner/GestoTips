@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>GestoTips</title>
-<link rel="icon" type="image/png" href="./icon.png?v=1.9.0">
-<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.9.0">
+<link rel="icon" type="image/png" href="./icon.png?v=1.10.0">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.10.0">
 <style>:root{color-scheme:light;--bg:#f7f8fd;--tx:#28377e;--mu:#566598;--ln:#303f91;--surface:#fff;--soft:#f0f2fc;--border:#d4daf1;--field:#b6bfdf;--on:#fff;--red:#b42318;--green:#17734a}
 :root[data-theme=dark]{color-scheme:dark;--bg:#10152c;--tx:#e5e9ff;--mu:#adb8e5;--ln:#a1afff;--surface:#1b2447;--soft:#232f59;--border:#425080;--field:#6371a0;--on:#10152c;--red:#ff9992;--green:#84dbab}
 *{box-sizing:border-box}
@@ -50,8 +50,6 @@ button:disabled{opacity:.55;cursor:not-allowed}
 #menu-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:5;width:192px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 30px rgba(40,55,126,.15);padding:10px}
 #tabs{display:grid;gap:6px;margin:0 0 6px}
 #menu-panel button{width:100%;justify-content:flex-start}
-#tabs .menu-link{display:block;padding:8px 12px;border-radius:10px;color:var(--ln);font-weight:600;text-decoration:none;font-size:14px}
-#tabs .menu-link:hover{background:var(--soft)}
 @media(max-width:430px){
   .topbar,.top-actions{gap:6px}
   .top-actions button{font-size:14px;padding:7px 9px}
@@ -141,7 +139,7 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 <body>
 <main>
 <header class="topbar">
-  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.9.0<span id="sync-state" role="status"></span></div></div>
+  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.10.0<span id="sync-state" role="status"></span></div></div>
   <div class="top-actions">
     <div class="menu-anchor">
       <button id="menu-toggle" type="button" aria-label="Menú" aria-expanded="false" aria-controls="menu-panel" hidden><span aria-hidden="true">☰</span><span class="top-action-label" aria-hidden="true">Menú</span></button>
@@ -527,7 +525,45 @@ async function localRequest(body) {
   return data;
 }
 
-const gestoAdminUrl = location.hostname === 'jninforner.github.io' ? 'https://gesto-apps.jninforner.workers.dev/GestoAdmin/' : '/GestoAdmin/';
+const tipsCollator = new Intl.Collator('ca', {sensitivity:'base'});
+const madridToday = () => new Intl.DateTimeFormat('en-CA', {
+  timeZone:'Europe/Madrid', year:'numeric', month:'2-digit', day:'2-digit'
+}).format(new Date());
+
+function payoutSummary(rows, nameOf = () => '') {
+  if (!rows.length) return '<p class="meta">Encara no hi ha punts assignats.</p>';
+  return '<ul class="payout-list">'+rows.slice().sort((a,b) => (a.name ?? nameOf(a.id)).localeCompare(b.name ?? nameOf(b.id), 'ca')).map(row =>
+    '<li><span>'+escapeHtml(row.name ?? nameOf(row.id))+'</span><span>'+formatPoints(row.units)+'</span><strong>'+formatMoney(row.cents)+'</strong></li>'
+  ).join('')+'</ul>';
+}
+
+// Històric (administradors i treballadors amb permís). source = {periods, annualTotals, workers}.
+function renderTipsHistory(source, historyYear, today) {
+  const collator = tipsCollator;
+  const years = [...new Set([today.slice(0,4),...source.periods.map(period => period.date.slice(0,4))])].sort().reverse();
+  if (!years.includes(historyYear)) historyYear = years[0];
+  const periods = source.periods.filter(period => period.date.startsWith(historyYear+'-'));
+  const names = new Map(periods.flatMap(period => period.payouts.map(row => [row.id,row.name])));
+  const amounts = new Map(source.annualTotals.filter(row => row.year === historyYear).map(row => [row.worker_id,row.cents]));
+  const workers = new Map(source.workers.map(row => [row.id,row.name]));
+  for (const id of amounts.keys()) {
+    if (!workers.has(id)) workers.set(id,names.get(id) || 'Treballador');
+  }
+  const totals = [...workers].map(([id,name]) => ({name,cents:amounts.get(id) ?? 0}))
+    .sort((a,b) => collator.compare(a.name,b.name));
+  const summary = rows => payoutSummary(rows,id => workers.get(id) ?? '');
+  return {year:historyYear, html:'<section class="card"><h2>Històric</h2><nav aria-label="Anys del repartiment">'+
+    years.map(year => '<button type="button" data-history-year="'+year+'" aria-pressed="'+(year===historyYear)+'">'+year+'</button>').join('')+'</nav>'+
+    '<h3>Total anual per treballador</h3>'+
+    (totals.length ? '<ul class="annual-totals">'+totals.map(row => '<li><span>'+escapeHtml(row.name)+'</span><strong>'+formatMoney(row.cents)+'</strong></li>').join('')+'</ul>'
+      : '<p class="meta">Encara no hi ha propines tancades per a aquest any.</p>')+
+    '<h3>Repartiments</h3>'+
+    periods.map(period =>
+      '<details class="tip-day"><summary><strong>'+fullDate.format(dayOf(period.date))+'</strong><span>'+formatMoney(period.cents)+'</span></summary>'+
+      summary(period.payouts)+period.days.filter(day => day.open).map(day => '<div class="history-day"><strong>'+
+        dayLabel.format(dayOf(day.date))+'</strong><p>'+day.entries.map(row => escapeHtml(row.name)+' · '+formatPoints(row.units)).join(', ')+'</p></div>').join('')+
+      '</details>').join('')+'</section>'};
+}
 
 // Menú i mode fosc per a tothom (administradors i treballadors). Mateixa preferència que GestoComandes.
 function setupMenuAndTheme() {
@@ -556,10 +592,28 @@ function setupMenuAndTheme() {
 function mountTipsViewer(request, initial) {
   const content = get('content');
   const status = get('status');
+  const menu = get('menu-panel');
+  const toggle = get('menu-toggle');
+  const today = madridToday();
   let state = initial;
   let busy = false;
+  let tab = initial.can?.view || initial.can?.pot ? 'period' : 'history';
+  let historyYear;
+  function renderTabs() {
+    const can = state?.can ?? {};
+    const list = [can.view || can.pot ? ['period','Repartiment'] : null, can.history ? ['history','Històric'] : null].filter(Boolean);
+    get('tabs').innerHTML = list.length > 1 ? list.map(([key, label]) =>
+      '<button type="button" data-tab="'+key+'" '+(tab === key ? 'aria-current="page"' : '')+'>'+label+'</button>').join('') : '';
+  }
   function render(current) {
     const can = state?.can ?? {view:true, pot:true};
+    renderTabs();
+    if (tab === 'history' && state?.history) {
+      const result = renderTipsHistory(state.history,historyYear,today);
+      historyYear = result.year;
+      content.innerHTML = result.html;
+      return;
+    }
     content.innerHTML = '<section class="card"><h2>Repartiment actual</h2>'+
       (current ? '<p>'+fullDate.format(dayOf(current.date))+'</p>'+
         (can.pot ? '<form id="viewer-pot"><div class="grid"><label>Pot de propines (€)'+
@@ -616,9 +670,22 @@ function mountTipsViewer(request, initial) {
   });
   content.addEventListener('click', event => {
     if (event.target.id === 'refresh-current') void refresh();
+    const year = event.target.closest('[data-history-year]')?.dataset.historyYear;
+    if (year) {
+      historyYear = year;
+      render(state.current);
+    }
+  });
+  get('tabs').addEventListener('click', event => {
+    const button = event.target.closest('[data-tab]');
+    if (!button) return;
+    tab = button.dataset.tab;
+    menu.hidden = true;
+    toggle.setAttribute('aria-expanded','false');
+    render(state.current);
   });
   window.addEventListener('focus', () => {
-    if (!content.querySelector('form:focus-within')) void refresh();
+    if (tab === 'period' && !content.querySelector('form:focus-within')) void refresh();
   });
   render(initial.current);
 }
@@ -716,12 +783,7 @@ async function mountApp(request = localRequest, initial) {
     event.returnValue = '';
   });
 
-  function summary(rows) {
-    if (!rows.length) return '<p class="meta">Encara no hi ha punts assignats.</p>';
-    return '<ul class="payout-list">'+rows.slice().sort((a,b) => (a.name ?? nameOf(a.id)).localeCompare(b.name ?? nameOf(b.id), 'ca')).map(row =>
-      '<li><span>'+escapeHtml(row.name ?? nameOf(row.id))+'</span><span>'+formatPoints(row.units)+'</span><strong>'+formatMoney(row.cents)+'</strong></li>'
-    ).join('')+'</ul>';
-  }
+  const summary = rows => payoutSummary(rows,nameOf);
 
   function updateResult() {
     if (!get('result')) return;
@@ -755,34 +817,15 @@ async function mountApp(request = localRequest, initial) {
   }
 
   function renderHistory() {
-    const years = [...new Set([today.slice(0,4),...data.periods.map(period => period.date.slice(0,4))])].sort().reverse();
-    if (!years.includes(historyYear)) historyYear = years[0];
-    const periods = data.periods.filter(period => period.date.startsWith(historyYear+'-'));
-    const names = new Map(periods.flatMap(period => period.payouts.map(row => [row.id,row.name])));
-    const amounts = new Map(data.annualTotals.filter(row => row.year === historyYear).map(row => [row.worker_id,row.cents]));
-    const workers = new Map(data.workers.map(row => [row.id,row.name]));
-    for (const id of amounts.keys()) {
-      if (!workers.has(id)) workers.set(id,names.get(id) || 'Treballador');
-    }
-    const totals = [...workers].map(([id,name]) => ({name,cents:amounts.get(id) ?? 0}))
-      .sort((a,b) => collator.compare(a.name,b.name));
-    return '<section class="card"><h2>Històric</h2><nav aria-label="Anys del repartiment">'+
-      years.map(year => '<button type="button" data-history-year="'+year+'" aria-pressed="'+(year===historyYear)+'">'+year+'</button>').join('')+'</nav>'+
-      '<h3>Total anual per treballador</h3>'+
-      (totals.length ? '<ul class="annual-totals">'+totals.map(row => '<li><span>'+escapeHtml(row.name)+'</span><strong>'+formatMoney(row.cents)+'</strong></li>').join('')+'</ul>'
-        : '<p class="meta">Encara no hi ha propines tancades per a aquest any.</p>')+
-      '<h3>Repartiments</h3>'+
-      periods.map(period =>
-        '<details class="tip-day"><summary><strong>'+fullDate.format(dayOf(period.date))+'</strong><span>'+formatMoney(period.cents)+'</span></summary>'+
-        summary(period.payouts)+period.days.filter(day => day.open).map(day => '<div class="history-day"><strong>'+
-          dayLabel.format(dayOf(day.date))+'</strong><p>'+day.entries.map(row => escapeHtml(row.name)+' · '+formatPoints(row.units)).join(', ')+'</p></div>').join('')+
-        '</details>').join('')+'</section>';
+    const result = renderTipsHistory(data,historyYear,today);
+    historyYear = result.year;
+    return result.html;
   }
 
   function render() {
-    get('tabs').innerHTML = limited ? '' : [['period','Repartiment'],['history','Històric']].map(([key, label]) =>
-      '<button type="button" data-tab="'+key+'" '+(tab === key ? 'aria-current="page"' : '')+'>'+label+'</button>').join('')+
-      '<a class="menu-link" href="'+gestoAdminUrl+'" target="_blank" rel="noopener">Usuaris (GestoAdmin) ↗</a>';
+    const tabList = limited && !can.history ? [] : [['period','Repartiment'],['history','Històric']];
+    get('tabs').innerHTML = tabList.map(([key, label]) =>
+      '<button type="button" data-tab="'+key+'" '+(tab === key ? 'aria-current="page"' : '')+'>'+label+'</button>').join('');
     if (tab === 'period') {
       const locked = limited ? ' disabled' : '';
       const amountField = !limited || can.pot ? '<input id="amount" type="text" inputmode="decimal" maxlength="32" placeholder="0,00" value="'+escapeHtml(amount)+'">'
