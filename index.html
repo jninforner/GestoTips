@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>GestoTips</title>
-<link rel="icon" type="image/png" href="./icon.png?v=1.8.3">
-<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.8.3">
+<link rel="icon" type="image/png" href="./icon.png?v=1.9.0">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.9.0">
 <style>:root{color-scheme:light;--bg:#f7f8fd;--tx:#28377e;--mu:#566598;--ln:#303f91;--surface:#fff;--soft:#f0f2fc;--border:#d4daf1;--field:#b6bfdf;--on:#fff;--red:#b42318;--green:#17734a}
 :root[data-theme=dark]{color-scheme:dark;--bg:#10152c;--tx:#e5e9ff;--mu:#adb8e5;--ln:#a1afff;--surface:#1b2447;--soft:#232f59;--border:#425080;--field:#6371a0;--on:#10152c;--red:#ff9992;--green:#84dbab}
 *{box-sizing:border-box}
@@ -50,6 +50,8 @@ button:disabled{opacity:.55;cursor:not-allowed}
 #menu-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:5;width:192px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 30px rgba(40,55,126,.15);padding:10px}
 #tabs{display:grid;gap:6px;margin:0 0 6px}
 #menu-panel button{width:100%;justify-content:flex-start}
+#tabs .menu-link{display:block;padding:8px 12px;border-radius:10px;color:var(--ln);font-weight:600;text-decoration:none;font-size:14px}
+#tabs .menu-link:hover{background:var(--soft)}
 @media(max-width:430px){
   .topbar,.top-actions{gap:6px}
   .top-actions button{font-size:14px;padding:7px 9px}
@@ -139,7 +141,7 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 <body>
 <main>
 <header class="topbar">
-  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.8.3<span id="sync-state" role="status"></span></div></div>
+  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.9.0<span id="sync-state" role="status"></span></div></div>
   <div class="top-actions">
     <div class="menu-anchor">
       <button id="menu-toggle" type="button" aria-label="Menú" aria-expanded="false" aria-controls="menu-panel" hidden><span aria-hidden="true">☰</span><span class="top-action-label" aria-hidden="true">Menú</span></button>
@@ -514,12 +516,41 @@ const escapeHtml = value => String(value).replace(/[&<>"']/g, char => ({'&':'&am
 const get = id => document.getElementById(id);
 
 async function localRequest(body) {
+  // Només en local: ?as=correu mostra l'app com la veuria aquest treballador.
+  const as = new URLSearchParams(location.search).get('as');
+  const headers = as ? {'X-Local-As':as} : {};
   const response = await fetch('/NexaTips/api', body ? {
-    method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(body)
-  } : {cache:'no-store'});
+    method:'POST', headers:{...headers,'Content-Type':'application/json'}, body:JSON.stringify(body)
+  } : {cache:'no-store',headers});
   const data = await response.json();
   if (!response.ok) throw new Error(data.error);
   return data;
+}
+
+const gestoAdminUrl = location.hostname === 'jninforner.github.io' ? 'https://gesto-apps.jninforner.workers.dev/GestoAdmin/' : '/GestoAdmin/';
+
+// Menú i mode fosc per a tothom (administradors i treballadors). Mateixa preferència que GestoComandes.
+function setupMenuAndTheme() {
+  const menu = get('menu-panel');
+  const toggle = get('menu-toggle');
+  const theme = get('theme');
+  function setTheme(dark) {
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    theme.textContent = dark ? 'Mode clar' : 'Mode fosc';
+    theme.setAttribute('aria-pressed', String(dark));
+  }
+  const saved = localStorage.getItem('theme') ?? localStorage.getItem('nexatips-theme');
+  setTheme(saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches);
+  theme.addEventListener('click', () => {
+    const dark = document.documentElement.dataset.theme !== 'dark';
+    localStorage.setItem('theme', dark ? 'dark' : 'light');
+    setTheme(dark);
+  });
+  toggle.hidden = false;
+  toggle.addEventListener('click', () => {
+    menu.hidden = !menu.hidden;
+    toggle.setAttribute('aria-expanded', String(!menu.hidden));
+  });
 }
 
 function mountTipsViewer(request, initial) {
@@ -528,16 +559,17 @@ function mountTipsViewer(request, initial) {
   let state = initial;
   let busy = false;
   function render(current) {
+    const can = state?.can ?? {view:true, pot:true};
     content.innerHTML = '<section class="card"><h2>Repartiment actual</h2>'+
       (current ? '<p>'+fullDate.format(dayOf(current.date))+'</p>'+
-        '<form id="viewer-pot"><div class="grid"><label>Pot de propines (€)'+
+        (can.pot ? '<form id="viewer-pot"><div class="grid"><label>Pot de propines (€)'+
         '<input name="amount" type="text" inputmode="decimal" maxlength="32" placeholder="0,00" required value="'+
         (current.cents === null ? '' : (current.cents/100).toFixed(2).replace('.',','))+'"></label></div>'+
-        '<button class="primary">Desa el pot</button></form>'+
-        (current.payouts.length ? '<ul class="payout-list">'+current.payouts.slice().sort((a,b) => a.name.localeCompare(b.name,'ca')).map(row =>
+        '<button class="primary">Desa el pot</button></form>' : '')+
+        (!can.view ? '' : current.payouts.length ? '<ul class="payout-list">'+current.payouts.slice().sort((a,b) => a.name.localeCompare(b.name,'ca')).map(row =>
           '<li><span>'+escapeHtml(row.name)+'</span><span>'+formatPoints(row.units)+'</span><strong>'+formatMoney(row.cents)+'</strong></li>').join('')+'</ul>'
           : '<p class="meta">Els imports encara no estan disponibles.</p>')+
-        current.days.map(day => '<div class="history-day"><strong>'+dayLabel.format(dayOf(day.date))+'</strong><p>'+
+        (can.view ? current.days : []).map(day => '<div class="history-day"><strong>'+dayLabel.format(dayOf(day.date))+'</strong><p>'+
           day.entries.map(row => escapeHtml(row.name)+(row.units === null ? '' : ' · '+formatPoints(row.units))).join(', ')+'</p></div>').join('')
         : '<p class="meta">Encara no hi ha cap repartiment en curs.</p>')+
       '<button id="refresh-current" type="button">Actualitza</button></section>';
@@ -595,8 +627,8 @@ async function mountApp(request = localRequest, initial) {
   const content = get('content');
   const status = get('status');
   const menu = get('menu-panel');
-  bindWorkerContacts(content);
   const toggle = get('menu-toggle');
+  setupMenuAndTheme();
   let data;
   try {
     data = initial ?? await request();
@@ -611,9 +643,11 @@ async function mountApp(request = localRequest, initial) {
   const today = new Intl.DateTimeFormat('en-CA', {
     timeZone:'Europe/Madrid', year:'numeric', month:'2-digit', day:'2-digit'
   }).format(new Date());
+  // role 'points': treballador que pot marcar els punts (sense canviar dates, sense tancar i sense històric).
+  const limited = data.role === 'points';
+  const can = data.can ?? {view:true, pot:true, points:true};
   let tab = 'period';
   let historyYear;
-  const workerChannel = typeof BroadcastChannel === 'function' ? new BroadcastChannel('nexa-worker-profiles') : null;
   let date;
   let start;
   let days;
@@ -690,6 +724,7 @@ async function mountApp(request = localRequest, initial) {
   }
 
   function updateResult() {
+    if (!get('result')) return;
     const cents = parseCents(amount);
     const invalidPoints = days.some(day => day.open && day.entries.some(row => !validUnits(row.units)));
     const {units, payouts} = distribute(cents ?? 0, days);
@@ -698,7 +733,7 @@ async function mountApp(request = localRequest, initial) {
     get('result').innerHTML = invalidPoints
       ? '<p class="error">Introdueix punts positius o zero, amb fins a sis decimals.</p>'
       : cents === null ? '<p class="meta">Introdueix el pot per veure els imports.</p>' : summary(payouts);
-    get('close-period').disabled = busy || invalidPoints || cents === null || (!units && cents > 0) || !days.some(day => day.open);
+    if (get('close-period')) get('close-period').disabled = busy || invalidPoints || cents === null || (!units && cents > 0) || !days.some(day => day.open);
   }
 
   function renderDay(day, index) {
@@ -745,22 +780,27 @@ async function mountApp(request = localRequest, initial) {
   }
 
   function render() {
-    get('tabs').innerHTML = [['period','Repartiment'],['workers','Equip'],['history','Històric']].map(([key, label]) =>
-      '<button type="button" data-tab="'+key+'" '+(tab === key ? 'aria-current="page"' : '')+'>'+label+'</button>').join('');
+    get('tabs').innerHTML = limited ? '' : [['period','Repartiment'],['history','Històric']].map(([key, label]) =>
+      '<button type="button" data-tab="'+key+'" '+(tab === key ? 'aria-current="page"' : '')+'>'+label+'</button>').join('')+
+      '<a class="menu-link" href="'+gestoAdminUrl+'" target="_blank" rel="noopener">Usuaris (GestoAdmin) ↗</a>';
     if (tab === 'period') {
+      const locked = limited ? ' disabled' : '';
+      const amountField = !limited || can.pot ? '<input id="amount" type="text" inputmode="decimal" maxlength="32" placeholder="0,00" value="'+escapeHtml(amount)+'">'
+        : '<input type="text" value="'+escapeHtml(amount)+'" readonly>';
       content.innerHTML = '<section class="card"><h2>Repartiment</h2><div class="grid period-fields">'+
-        '<label>Data inicial<input id="period-start" type="date" value="'+start+'" min="'+earliestStart()+'"></label>'+
-        '<label>Data final<input id="period-date" type="date" value="'+date+'" min="'+start+'"></label>'+
-        '<label>Pot de propines (€)<input id="amount" type="text" inputmode="decimal" maxlength="32" placeholder="0,00" value="'+escapeHtml(amount)+'"></label></div></section>'+
+        '<label>Data inicial<input id="period-start" type="date" value="'+start+'" min="'+earliestStart()+'"'+locked+'></label>'+
+        '<label>Data final<input id="period-date" type="date" value="'+date+'" min="'+start+'"'+locked+'></label>'+
+        (!limited || can.pot || can.view ? '<label>Pot de propines (€)'+amountField+'</label>' : '')+'</div>'+
+        (limited ? '<p class="meta">Pots marcar els dies oberts i els punts de cada treballador. Les dates i el tancament els fa l’administrador.</p>' : '')+
+        '</section>'+
         '<section class="card"><h2>Dies i treballadors</h2>'+
-        (!activeWorkers().length ? '<p class="meta">Afegeix persones al menú Equip per començar.</p>' : '')+
-        days.map(renderDay).join('')+'</section><section class="card"><h2>Resultat</h2>'+
+        (!activeWorkers().length ? '<p class="meta">Afegeix persones a GestoAdmin per començar.</p>' : '')+
+        days.map(renderDay).join('')+'</section>'+
+        (!limited || can.view ? '<section class="card"><h2>Resultat</h2>'+
         '<div class="result-meta"><div><span>Parts totals</span><strong id="total-points"></strong></div>'+
         '<div><span>Valor per punt</span><strong id="per-point"></strong></div></div>'+
-        '<div id="result"></div><button id="close-period" class="primary" type="button">Tanca el repartiment</button></section>';
+        '<div id="result"></div>'+(limited ? '' : '<button id="close-period" class="primary" type="button">Tanca el repartiment</button>')+'</section>' : '');
       updateResult();
-    } else if (tab === 'workers') {
-      content.innerHTML = renderWorkerProfiles(data.workers,escapeHtml);
     } else {
       content.innerHTML = renderHistory();
     }
@@ -796,25 +836,6 @@ async function mountApp(request = localRequest, initial) {
     }
   }
 
-  async function refreshWorkerProfiles() {
-    if (busy) return;
-    try {
-      const refreshed = await request();
-      data.workers = refreshed.workers;
-      const active = new Set(activeWorkers().map(worker => worker.id));
-      for (const day of days) day.entries = day.entries.filter(row => active.has(row.id));
-      if (tab !== 'history') render();
-    } catch (error) {
-      status.textContent = error.message;
-    }
-  }
-  if (workerChannel) workerChannel.onmessage = () => { void refreshWorkerProfiles(); };
-
-  toggle.hidden = false;
-  toggle.addEventListener('click', () => {
-    menu.hidden = !menu.hidden;
-    toggle.setAttribute('aria-expanded', String(!menu.hidden));
-  });
   get('tabs').addEventListener('click', event => {
     const button = event.target.closest('[data-tab]');
     if (!button || busy) return;
@@ -822,21 +843,7 @@ async function mountApp(request = localRequest, initial) {
     menu.hidden = true;
     toggle.setAttribute('aria-expanded','false');
     render();
-    if (tab === 'workers') void refreshWorkerProfiles();
   });
-  const theme = get('theme');
-  function setTheme(dark) {
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-    theme.textContent = dark ? 'Mode clar' : 'Mode fosc';
-    theme.setAttribute('aria-pressed', String(dark));
-  }
-  setTheme(localStorage.getItem('nexatips-theme') === 'dark');
-  theme.addEventListener('click', () => {
-    const dark = document.documentElement.dataset.theme !== 'dark';
-    localStorage.setItem('nexatips-theme', dark ? 'dark' : 'light');
-    setTheme(dark);
-  });
-
   content.addEventListener('toggle', event => {
     const index = event.target.dataset.day;
     if (index === undefined || !days[index]) return;
@@ -925,18 +932,6 @@ async function mountApp(request = localRequest, initial) {
         tab = 'history';
       }, 'S’ha tancat el repartiment.');
     }
-  });
-  content.addEventListener('submit', event => {
-    if (!event.target.matches('[data-worker-profile]')) return;
-    event.preventDefault();
-    const profile = workerProfilePayload(event.target);
-    void save(profile, () => {
-      if (!profile.active && days.some(day => day.entries.some(row => row.id === profile.id))) {
-        for (const day of days) day.entries = day.entries.filter(row => row.id !== profile.id);
-        queueDraft();
-      }
-      workerChannel?.postMessage('updated');
-    }, 'S’ha desat la fitxa.');
   });
   render();
 }
