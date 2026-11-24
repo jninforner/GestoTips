@@ -5,8 +5,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>GestoTips</title>
-<link rel="icon" type="image/png" href="./icon.png?v=1.10.2">
-<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.10.2">
+<link rel="icon" type="image/png" href="./icon.png?v=1.10.3">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.10.3">
 <style>:root{color-scheme:light;--bg:#f7f8fd;--tx:#28377e;--mu:#566598;--ln:#303f91;--surface:#fff;--soft:#f0f2fc;--border:#d4daf1;--field:#b6bfdf;--on:#fff;--red:#b42318;--green:#17734a}
 :root[data-theme=dark]{color-scheme:dark;--bg:#10152c;--tx:#e5e9ff;--mu:#adb8e5;--ln:#a1afff;--surface:#1b2447;--soft:#232f59;--border:#425080;--field:#6371a0;--on:#10152c;--red:#ff9992;--green:#84dbab}
 *{box-sizing:border-box}
@@ -35,8 +35,6 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .item:last-child{padding-bottom:0}
 .meta{color:var(--mu);font-size:14px}
 .error,.remove{color:var(--red)}
-#status:empty{display:none}
-#status{margin-bottom:12px}
 @media(max-width:430px){main{padding:14px 12px 28px}.card{padding:15px}h1{font-size:24px}nav button{padding:8px 11px}}
 [hidden]{display:none !important}
 .topbar{position:relative;gap:12px;padding-bottom:10px;border:0}
@@ -148,13 +146,18 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 .main-card .card h3:first-child{margin-top:0}
 .main-card .card h2{font-size:17px;margin:0 0 10px}
 .main-card>.card:first-of-type{margin-top:14px}
+
+/* Avisos flotants comuns de les apps Gesto (vegeu ESTIL.md → Avisos i errors). */
+#status:empty{display:none}
+#status{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom));transform:translateX(-50%);z-index:1000;width:max-content;max-width:min(600px,calc(100% - 24px));margin:0;padding:12px 16px;border-radius:12px;background:var(--surface);color:var(--tx);border:1px solid var(--border);box-shadow:0 8px 28px #11183140;font-weight:600;cursor:pointer}
+#status.error{color:var(--red);border-color:var(--red)}
 </style>
 <link rel="manifest" href="./manifest.webmanifest">
 </head>
 <body>
 <main>
 <header class="topbar">
-  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.10.2<span id="sync-state" role="status"></span></div></div>
+  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.10.3<span id="sync-state" role="status"></span></div></div>
   <div class="top-actions">
     <div class="menu-anchor">
       <button id="menu-toggle" type="button" aria-label="Menú" aria-expanded="false" aria-controls="menu-panel" hidden><span aria-hidden="true">☰</span><span class="top-action-label" aria-hidden="true">Menú</span></button>
@@ -519,6 +522,46 @@ function bindWorkerContacts(container) {
   });
 }
 
+// Avisos flotants comuns de les apps Gesto (vegeu ESTIL.md → Avisos i errors).
+// Funciona sobre l'element #status: els d'èxit marxen sols als 6 segons, els d'error (classe .error) es queden fins que es premen.
+// Si hi ha un <dialog> obert, l'avís s'hi mou perquè no quedi tapat. Els camps obligatoris buits avisen aquí, sense la bombolla del navegador.
+function setupNotices() {
+  const status = document.querySelector('#status');
+  if (!status || status.dataset.notices) return;
+  status.dataset.notices = '1';
+  let timer = 0;
+  const place = () => {
+    const parent = document.querySelector('dialog[open]') || document.querySelector('#workspace');
+    if (parent && status.parentElement !== parent) parent.append(status);
+  };
+  new MutationObserver(() => {
+    clearTimeout(timer);
+    if (!status.textContent.trim()) return;
+    place();
+    if (!status.classList.contains('error') && status.textContent !== 'Desant…') timer = setTimeout(() => { status.textContent = ''; },6000);
+  }).observe(status,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['class']});
+  status.addEventListener('click',() => { status.textContent = ''; });
+  document.addEventListener('close',() => {
+    const home = document.querySelector('#workspace');
+    if (home && status.parentElement !== home) home.append(status);
+  },true);
+  let invalidShown = false;
+  document.addEventListener('invalid',event => {
+    event.preventDefault();
+    if (invalidShown) return;
+    invalidShown = true;
+    setTimeout(() => { invalidShown = false; },0);
+    const field = event.target;
+    const label = field.closest('label')?.childNodes[0]?.textContent?.trim() || field.getAttribute('aria-label') || '';
+    field.focus();
+    status.classList.add('error');
+    status.textContent = field.validity.valueMissing
+      ? (field.tagName === 'SELECT' ? 'Tria una opció a «'+label+'».' : 'Omple el camp «'+label+'».')
+      : (label ? 'Revisa el camp «'+label+'». ' : '')+field.validationMessage;
+  },true);
+}
+setupNotices();
+
 const money = new Intl.NumberFormat('ca-ES', {style:'currency', currency:'EUR'});
 const points = new Intl.NumberFormat('ca-ES', {maximumFractionDigits:6});
 const dayLabel = new Intl.DateTimeFormat('ca-ES', {weekday:'long', day:'numeric', month:'long', timeZone:'UTC'});
@@ -653,6 +696,7 @@ function mountTipsViewer(request, initial) {
       status.textContent = '';
     } catch (error) {
       render(null);
+      status.classList.add('error');
       status.textContent = error.message;
     } finally {
       busy = false;
@@ -665,6 +709,7 @@ function mountTipsViewer(request, initial) {
     const form = event.target;
     const amount = form.elements.amount.value;
     if (parseCents(amount) === null) {
+      status.classList.add('error');
       status.textContent = 'Introdueix un import vàlid.';
       form.elements.amount.focus();
       return;
@@ -674,10 +719,12 @@ function mountTipsViewer(request, initial) {
     button.disabled = true;
     try {
       await request({action:'viewerPot',amount,date:state.current.date,revision:state.revision});
+      status.classList.remove('error');
       status.textContent = 'Pot desat.';
       state = await request();
       render(state.current);
     } catch (error) {
+      status.classList.add('error');
       status.textContent = error.message;
     } finally {
       busy = false;
@@ -716,6 +763,7 @@ async function mountApp(request = localRequest, initial) {
   try {
     data = initial ?? await request();
   } catch {
+    status.classList.add('error');
     status.textContent = 'No s’han pogut carregar les dades. Recarrega la pàgina.';
     return;
   }
@@ -884,6 +932,7 @@ async function mountApp(request = localRequest, initial) {
       }
       data = await request();
       callback?.();
+      status.classList.remove('error');
       status.textContent = message;
     } catch (error) {
       status.classList.add('error');
