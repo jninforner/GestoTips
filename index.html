@@ -357,18 +357,23 @@ function renderAppleContactPicker() {
     '<pre>NEXA-CONTACTE\nNom: \nCorreu: \nTelèfon: </pre></details></details>';
 }
 
-function renderWorkerProfiles(workers, escapeHtml) {
-  const sorted = workers.slice().sort((a,b) => a.name.localeCompare(b.name,'ca'));
-  const form = worker =>
-    '<form class="worker-profile" data-worker-profile="'+escapeHtml(worker?.id ?? '')+'">'+
-    '<div class="actions worker-contact-actions">'+
+// Bloc per associar un contacte de l'agenda (Tips i GestoAdmin).
+function renderWorkerContactPicker(worker, escapeHtml) {
+  return '<div class="actions worker-contact-actions">'+
     (typeof navigator.contacts?.select === 'function' ? '<button type="button" data-worker-contact>Tria de l’agenda</button>' : '')+
     (isMobileContactDevice() ? '' : '<label class="button">Importa contacte Apple (.vcf)<input type="file" accept=".vcf,text/vcard,text/x-vcard" data-worker-vcard></label>')+'</div>'+
     renderAppleContactPicker()+
     '<input type="hidden" name="contactName" value="'+escapeHtml(worker?.contactName ?? '')+'">'+
     '<input type="hidden" name="contactUid" value="'+escapeHtml(worker?.contactUid ?? '')+'">'+
     '<div data-worker-contact-options></div><p class="meta" data-worker-contact-status role="status" '+(worker?.contactName ? '' : 'hidden')+'>'+
-    (worker?.contactName ? 'Contacte associat: '+escapeHtml(worker.contactName) : '')+'</p>'+
+    (worker?.contactName ? 'Contacte associat: '+escapeHtml(worker.contactName) : '')+'</p>';
+}
+
+function renderWorkerProfiles(workers, escapeHtml) {
+  const sorted = workers.slice().sort((a,b) => a.name.localeCompare(b.name,'ca'));
+  const form = worker =>
+    '<form class="worker-profile" data-worker-profile="'+escapeHtml(worker?.id ?? '')+'">'+
+    renderWorkerContactPicker(worker,escapeHtml)+
     '<div class="worker-profile-fields">'+
     '<label>Nom<input name="name" maxlength="80" value="'+escapeHtml(worker?.name ?? '')+'" required></label>'+
     '<label>Correu<input name="email" type="email" maxlength="254" value="'+escapeHtml(worker?.email ?? '')+'"></label>'+
@@ -408,6 +413,8 @@ function bindWorkerContacts(container) {
 
   function setWorkerContactField(form, field, value) {
     const fields = form.elements;
+    // Només a la fitxa antiga de GestoTips: a GestoAdmin els permisos es revisen a mà.
+    if (!('workerProfile' in form.dataset)) return false;
     if (field === 'email' && value.toLowerCase() !== fields.email.value.trim().toLowerCase() && fields.tipsView.checked) {
       fields.tipsView.checked = false;
       return true;
@@ -417,7 +424,7 @@ function bindWorkerContacts(container) {
 
   function fillWorkerContact(form, contact) {
     const fields = form.elements;
-    if (contact.name && !form.dataset.workerProfile) fields.name.value = contact.name.trim().slice(0,80);
+    if (contact.name && !(form.dataset.workerProfile || form.dataset.user)) fields.name.value = contact.name.trim().slice(0,80);
     const groups = [
       ['email','Correu',contact.email || [],254],
       ['phone','Telèfon',contact.tel || [],48]
