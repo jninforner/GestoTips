@@ -5,8 +5,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>GestoTips</title>
-<link rel="icon" type="image/png" href="./icon.png?v=1.11.1">
-<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.11.1">
+<link rel="icon" type="image/png" href="./icon.png?v=1.11.2">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.11.2">
+<script>try{document.documentElement.dataset.theme=localStorage.getItem("theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}</script>
 <style>:root{color-scheme:light;--bg:#f7f8fd;--tx:#28377e;--mu:#566598;--ln:#303f91;--surface:#fff;--soft:#f0f2fc;--border:#d4daf1;--field:#b6bfdf;--on:#fff;--red:#b42318;--green:#17734a}
 :root[data-theme=dark]{color-scheme:dark;--bg:#10152c;--tx:#e5e9ff;--mu:#adb8e5;--ln:#a1afff;--surface:#1b2447;--soft:#232f59;--border:#425080;--field:#6371a0;--on:#10152c;--red:#ff9992;--green:#84dbab}
 *{box-sizing:border-box}
@@ -37,22 +38,6 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .error,.remove{color:var(--red)}
 @media(max-width:430px){main{padding:14px 12px 28px}.card{padding:15px}h1{font-size:24px}nav button{padding:8px 11px}}
 [hidden]{display:none !important}
-.topbar{position:relative;gap:12px;padding-bottom:10px;border:0}
-.brand{min-width:0}
-.brand h1{font-size:clamp(20px,4.5vw,30px);line-height:1.1;overflow-wrap:anywhere}
-.version{margin-top:5px}
-.top-actions{display:flex;flex-shrink:0;gap:8px;align-items:center}
-.top-actions button{gap:7px;min-height:42px;padding:8px 12px;white-space:nowrap}
-.top-actions button span:first-child{font-size:18px;line-height:1}
-.menu-anchor{position:relative}
-#menu-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:5;width:max-content;min-width:200px;background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 30px rgba(40,55,126,.15);padding:10px}
-#tabs{display:grid;gap:6px;margin:0 0 6px}
-#menu-panel button{width:100%;justify-content:flex-start;white-space:nowrap}
-@media(max-width:430px){
-  .topbar,.top-actions{gap:6px}
-  .top-actions button{font-size:14px;padding:7px 9px}
-  .version{font-size:13px}
-}
 main{width:100%;padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right))}
 .card,.grid,.grid>* ,label,.row>*{min-width:0}
 input,select,textarea,button,.button{max-width:100%;min-width:0}
@@ -65,12 +50,6 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 #login-status:empty{display:none}
 @media(max-width:480px){
   html{-webkit-text-size-adjust:100%}
-  .topbar{align-items:flex-start;gap:8px;margin-bottom:8px;padding-bottom:4px}
-  .top-actions{gap:4px}
-  .top-actions #menu-toggle,.top-actions #logout{width:44px;min-height:44px;padding:0;border-color:transparent;background:transparent}
-  .top-actions .top-action-label{display:none}
-  .menu-anchor{position:static}
-  #menu-panel{top:100%;right:0;max-width:100%}
   button,.button{touch-action:manipulation}
 }
 
@@ -169,13 +148,47 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 .trash-row{display:flex;flex-direction:column;gap:2px;padding:10px 12px;min-height:44px;justify-content:center}
 .swipe+.swipe>.trash-row{border-top:1px solid var(--border)}
 .trash-row strong,.trash-row .meta{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Capçalera comuna de les apps Gesto: nom, versió, ☰ Menú i ↪︎ Sortir (ESTIL.md, «Capçalera de l'app» i «Menú»).
+   Font única: si canvies alguna cosa aquí, canvia a totes les apps. Va després del CSS de cada app. */
+.topbar{display:flex;align-items:center;justify-content:space-between;position:relative;gap:12px;margin:0 0 18px;padding:0 0 10px;border:0}
+.topbar .brand{min-width:0;flex:1}
+.topbar .brand h1{margin:0;font-size:clamp(20px,4.5vw,30px);font-weight:700;letter-spacing:-.035em;line-height:1.1;overflow-wrap:anywhere;font-variant:normal}
+.topbar .version{margin-top:5px;font-size:14px;color:var(--mu)}
+.top-actions{display:flex;flex-shrink:0;gap:8px;align-items:center}
+.top-actions>button,.top-actions>.menu-anchor>button{display:inline-flex;align-items:center;justify-content:center;gap:7px;min-height:42px;padding:8px 12px;border:1px solid var(--ln);border-radius:10px;background:var(--surface);color:var(--tx);font:600 15px/1.3 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant:normal;white-space:nowrap;cursor:pointer;box-shadow:none}
+.top-actions>button:hover,.top-actions>.menu-anchor>button:hover{background:var(--soft);color:var(--tx);box-shadow:none;filter:none}
+.top-actions button span:first-child{font-size:18px;line-height:1}
+.top-actions [hidden]{display:none!important}
+.menu-anchor{position:relative}
+#menu-panel{position:absolute;top:calc(100% + 8px);right:0;z-index:30;display:block;width:max-content;min-width:200px;max-width:calc(100vw - 24px);background:var(--surface);border:1px solid var(--border);border-radius:14px;box-shadow:0 12px 30px rgba(40,55,126,.15);padding:10px}
+#menu-panel[hidden]{display:none}
+#menu-panel #tabs{display:grid;gap:6px;margin:0 0 6px}
+#menu-panel #tabs:empty{display:none}
+#menu-panel button{display:flex;align-items:center;justify-content:flex-start;width:100%;min-height:44px;margin:0;padding:9px 15px;border:1px solid var(--ln);border-radius:10px;background:var(--surface);color:var(--tx);font:600 15px/1.3 system-ui,-apple-system,"Segoe UI",sans-serif;font-variant:normal;text-align:left;white-space:nowrap;cursor:pointer;box-shadow:none}
+#menu-panel button:hover{background:var(--soft);color:var(--tx);box-shadow:none;filter:none}
+#menu-panel button[aria-current=page],#menu-panel button.on{background:var(--ln);color:var(--on)}
+#menu-panel button[aria-current=page]:hover,#menu-panel button.on:hover{background:var(--ln);color:var(--on);filter:brightness(1.13)}
+@media(max-width:430px){
+  .top-actions>button,.top-actions>.menu-anchor>button{font-size:14px;padding:7px 9px}
+  .topbar .version{font-size:13px}
+}
+/* Mòbil: només les icones, sense vora ni fons; el menú s'ancora a la capçalera. */
+@media(max-width:480px){
+  .topbar{align-items:flex-start;gap:8px;margin-bottom:8px;padding-bottom:4px}
+  .top-actions{gap:4px}
+  .top-actions #menu-toggle,.top-actions #logout{width:44px;min-height:44px;padding:0;border-color:transparent;background:transparent}
+  .top-actions .top-action-label{display:none}
+  .menu-anchor{position:static}
+  #menu-panel{top:100%;right:0}
+}
 </style>
 <link rel="manifest" href="./manifest.webmanifest">
 </head>
 <body>
 <main>
 <header class="topbar">
-  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.11.1<span id="sync-state" role="status"></span></div></div>
+  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.11.2<span id="sync-state" role="status"></span></div></div>
   <div class="top-actions">
     <div class="menu-anchor">
       <button id="menu-toggle" type="button" aria-label="Menú" aria-expanded="false" aria-controls="menu-panel" hidden><span aria-hidden="true">☰</span><span class="top-action-label" aria-hidden="true">Menú</span></button>
@@ -223,6 +236,58 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 </div>
 </main>
 <script type="module">
+// Capçalera comuna de les apps Gesto: menú ☰ i mode fosc (ESTIL.md, «Capçalera de l'app» i «Menú»).
+// Font única per a GestoCatalog, GestoTips, GestoAdmin i GestoStock. L'HTML el genera shared/header.mjs.
+// gestoHeader() es pot cridar diverses vegades: només prepara els botons la primera.
+function gestoHeader() {
+  if (gestoHeader.ready) return gestoHeader.ready;
+  const toggle = document.getElementById('menu-toggle');
+  const panel = document.getElementById('menu-panel');
+  const theme = document.getElementById('theme');
+  function setMenu(open) {
+    panel.hidden = !open;
+    toggle.setAttribute('aria-expanded', String(open));
+  }
+  toggle.addEventListener('click', event => {
+    event.stopPropagation();
+    setMenu(panel.hidden);
+  });
+  // Es tanca en tocar fora, amb Esc o en triar una secció.
+  document.addEventListener('click', event => {
+    if (!panel.hidden && !event.target.closest('.menu-anchor')) setMenu(false);
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key !== 'Escape' || panel.hidden) return;
+    setMenu(false);
+    toggle.focus();
+  });
+  panel.addEventListener('click', event => {
+    if (event.target.closest('#tabs button')) setMenu(false);
+  });
+  // Mode fosc: clau `theme` del navegador, comuna a totes les apps (mateix domini).
+  // El <head> ja l'aplica abans de pintar la pàgina; aquí només s'actualitza el botó.
+  function setTheme(dark) {
+    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
+    theme.textContent = dark ? 'Mode clar' : 'Mode fosc';
+    theme.setAttribute('aria-pressed', String(dark));
+  }
+  let saved = null;
+  try { saved = localStorage.getItem('theme'); } catch {}
+  setTheme(saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches);
+  theme.addEventListener('click', () => {
+    const dark = document.documentElement.dataset.theme !== 'dark';
+    try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch {}
+    setTheme(dark);
+  });
+  gestoHeader.ready = {
+    setMenu,
+    setTheme,
+    showMenu() { toggle.hidden = false; },
+    tabs: document.getElementById('tabs')
+  };
+  return gestoHeader.ready;
+}
+
 // Stored values are measured in quarter points, including older repartiments.
 const pointScale = 250000;
 const maxUnits = 3999999.999996;
@@ -564,7 +629,7 @@ function bindWorkerContacts(container) {
   });
 }
 
-// Avisos flotants comuns de les apps Gesto (vegeu ESTIL.md → Avisos i errors).
+// Avisos flotants comuns de les apps Gesto (vegeu ESTIL.md → Avisos i errors). Els fan servir GestoTips, GestoAdmin i GestoStock.
 // Funciona sobre l'element #status: els d'èxit marxen sols als 6 segons, els d'error (classe .error) es queden fins que es premen.
 // Si hi ha un <dialog> obert, l'avís s'hi mou perquè no quedi tapat. Els camps obligatoris buits avisen aquí, sense la bombolla del navegador.
 function setupNotices() {
@@ -572,9 +637,11 @@ function setupNotices() {
   if (!status || status.dataset.notices) return;
   status.dataset.notices = '1';
   let timer = 0;
+  // Lloc habitual de l'avís: #workspace (o el <body> si l'app no en té).
+  const home = () => document.querySelector('#workspace') || document.body;
   const place = () => {
-    const parent = document.querySelector('dialog[open]') || document.querySelector('#workspace');
-    if (parent && status.parentElement !== parent) parent.append(status);
+    const parent = document.querySelector('dialog[open]') || home();
+    if (status.parentElement !== parent) parent.append(status);
   };
   new MutationObserver(() => {
     clearTimeout(timer);
@@ -584,8 +651,7 @@ function setupNotices() {
   }).observe(status,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['class']});
   status.addEventListener('click',event => { if (!event.target.closest('[data-undo]')) status.textContent = ''; });
   document.addEventListener('close',() => {
-    const home = document.querySelector('#workspace');
-    if (home && status.parentElement !== home) home.append(status);
+    if (status.parentElement !== home()) home().append(status);
   },true);
   let invalidShown = false;
   document.addEventListener('invalid',event => {
@@ -594,7 +660,11 @@ function setupNotices() {
     invalidShown = true;
     setTimeout(() => { invalidShown = false; },0);
     const field = event.target;
-    const label = field.closest('label')?.childNodes[0]?.textContent?.trim() || field.getAttribute('aria-label') || '';
+    // Nom del camp: l'etiqueta que l'envolta, la <label for> o la que té just abans; si no, aria-label o placeholder.
+    const previous = field.previousElementSibling;
+    const outer = field.closest('label')?.childNodes[0]?.textContent?.trim();
+    const linked = (field.id && document.querySelector('label[for="'+CSS.escape(field.id)+'"]')) || (previous?.tagName === 'LABEL' ? previous : null);
+    const label = outer || linked?.textContent?.trim() || field.getAttribute('aria-label') || field.placeholder || '';
     field.focus();
     status.classList.add('error');
     status.textContent = field.validity.valueMissing
@@ -790,28 +860,9 @@ function renderTipsHistory(source, historyYear, today) {
       : '<p class="meta">Encara no hi ha propines tancades per a aquest any.</p>')+'</section>'};
 }
 
-// Menú i mode fosc per a tothom (administradors i treballadors). Mateixa preferència que GestoCatalog.
+// Menú i mode fosc per a tothom (administradors i treballadors): shared/header.js, comú a totes les apps Gesto.
 function setupMenuAndTheme() {
-  const menu = get('menu-panel');
-  const toggle = get('menu-toggle');
-  const theme = get('theme');
-  function setTheme(dark) {
-    document.documentElement.dataset.theme = dark ? 'dark' : 'light';
-    theme.textContent = dark ? 'Mode clar' : 'Mode fosc';
-    theme.setAttribute('aria-pressed', String(dark));
-  }
-  const saved = localStorage.getItem('theme') ?? localStorage.getItem('nexatips-theme');
-  setTheme(saved ? saved === 'dark' : matchMedia('(prefers-color-scheme: dark)').matches);
-  theme.addEventListener('click', () => {
-    const dark = document.documentElement.dataset.theme !== 'dark';
-    localStorage.setItem('theme', dark ? 'dark' : 'light');
-    setTheme(dark);
-  });
-  toggle.hidden = false;
-  toggle.addEventListener('click', () => {
-    menu.hidden = !menu.hidden;
-    toggle.setAttribute('aria-expanded', String(!menu.hidden));
-  });
+  gestoHeader().showMenu();
 }
 
 function mountTipsViewer(request, initial) {
