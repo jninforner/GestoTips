@@ -630,7 +630,7 @@ function bindWorkerContacts(container) {
 }
 
 // Avisos flotants comuns de les apps Gesto (vegeu ESTIL.md → Avisos i errors). Els fan servir GestoTips, GestoAdmin i GestoStock.
-// Funciona sobre l'element #status: els d'èxit marxen sols als 6 segons, els d'error (classe .error) es queden fins que es premen.
+// Funciona sobre l'element #status: els d'èxit marxen sols als 6 segons; els d'error (classe .error) i els importants (classe .keep) es queden fins que es premen.
 // Si hi ha un <dialog> obert, l'avís s'hi mou perquè no quedi tapat. Els camps obligatoris buits avisen aquí, sense la bombolla del navegador.
 function setupNotices() {
   const status = document.querySelector('#status');
@@ -645,9 +645,12 @@ function setupNotices() {
   };
   new MutationObserver(() => {
     clearTimeout(timer);
+    const stays = status.classList.contains('error') || status.classList.contains('keep');
+    const title = status.textContent.trim() && stays ? 'Prem per tancar l’avís' : '';
+    if (status.title !== title) status.title = title;
     if (!status.textContent.trim()) return;
     place();
-    if (!status.classList.contains('error') && status.textContent !== 'Desant…') timer = setTimeout(() => { status.textContent = ''; },6000);
+    if (!stays && status.textContent !== 'Desant…') timer = setTimeout(() => { status.textContent = ''; },6000);
   }).observe(status,{childList:true,characterData:true,subtree:true,attributes:true,attributeFilter:['class']});
   status.addEventListener('click',event => { if (!event.target.closest('[data-undo]')) status.textContent = ''; });
   document.addEventListener('close',() => {
@@ -674,7 +677,7 @@ function setupNotices() {
 }
 setupNotices();
 
-// Lliscar per eliminar o arxivar i avís amb «Desfés» (ESTIL.md), comú a GestoTips i GestoAdmin.
+// Lliscar per eliminar o arxivar i avís amb «Desfés» (ESTIL.md), comú a GestoCatalog, GestoTips, GestoAdmin i GestoStock.
 // Fila lliscable: swipeOpen(clau, es pot eliminar, es pot arxivar/restaurar, icona de la dreta) + fila amb la classe «swipe-row» + '</div>'.
 // setupSwipe(acció, ocupat): acció(clau, 'left'|'right') retorna (o promet) true si s'ha fet; si no, la fila torna al seu lloc.
 const swipeIcons = {
@@ -686,10 +689,11 @@ function swipeOpen(key, left, right, rightIcon = 'archive') {
   const attr = String(key).replace(/[&<>"']/g, char => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[char]));
   return '<div class="swipe" data-swipe="'+attr+'"'+(left ? ' data-left="1"' : '')+(right ? ' data-right="1" data-right-icon="'+rightIcon+'"' : '')+'><div class="swipe-bg" aria-hidden="true"></div>';
 }
-// Avís d'èxit amb el botó «Desfés» (dura els 6 segons dels avisos d'èxit).
-function showUndo(message, undo) {
+// Avís amb el botó «Desfés» (dura els 6 segons dels avisos d'èxit; si és d'error, es queda fins que es prem).
+function showUndo(message, undo, error = false) {
   const status = document.querySelector('#status');
-  status.classList.remove('error');
+  status.classList.remove('keep');
+  status.classList.toggle('error',error);
   status.textContent = message;
   if (!undo) return;
   const button = document.createElement('button');
@@ -754,7 +758,8 @@ function setupSwipe(action, isBusy = () => false) {
   document.addEventListener('pointerdown',event => {
     if (event.button > 0) return;
     const wrap = event.target.closest('.swipe');
-    if (!wrap || event.target.closest('input,select,textarea')) return;
+    // Els camps i el que porta data-no-swipe (per exemple, la nansa per ordenar) no fan lliscar la fila.
+    if (!wrap || event.target.closest('input,select,textarea,[data-no-swipe]')) return;
     touch = {wrap,x:event.clientX,y:event.clientY,id:event.pointerId,state:null};
   });
   document.addEventListener('pointermove',event => {
