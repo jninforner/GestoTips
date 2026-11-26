@@ -67,7 +67,10 @@ img,video,canvas{max-width:100%;height:auto}
 .main-card .card h3:first-child{margin-top:0}
 .main-card .card h2{font-size:17px;margin:0 0 10px}
 .main-card>.card:first-of-type{margin-top:14px}
-/* Fitxes (diàlegs) */
+/* Fitxes (diàlegs): <dialog class="sheet-dialog"> amb .sheet-head (títol i ✕), .sheet-part i .sheet-foot */
+dialog.sheet-dialog{width:min(560px,calc(100% - 24px));max-height:calc(100% - 24px);padding:18px;color:var(--tx);background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:auto}
+dialog.sheet-dialog::backdrop{background:#11183180}
+.sheet-close{min-width:0;width:40px;min-height:40px;padding:0;font-size:18px;flex:none}
 .sheet-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .sheet-head h2{margin:0}
 .sheet-part{border-top:1px solid var(--border);margin-top:14px;padding-top:12px}
@@ -199,6 +202,7 @@ img,video,canvas{max-width:100%;height:auto}
   .menu-anchor{position:static}
   #menu-panel{top:100%;right:0}
 }
+.topbar .entorn-proves{color:var(--red);letter-spacing:.04em}
 </style>
 <link rel="manifest" href="./manifest.webmanifest">
 </head>
