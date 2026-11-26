@@ -5,11 +5,18 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="referrer" content="no-referrer">
 <title>GestoTips</title>
-<link rel="icon" type="image/png" href="./icon.png?v=1.11.2">
-<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.11.2">
+<link rel="icon" type="image/png" href="./icon.png?v=1.11.3">
+<link rel="apple-touch-icon" sizes="180x180" href="./icon.png?v=1.11.3">
 <script>try{document.documentElement.dataset.theme=localStorage.getItem("theme")||(matchMedia("(prefers-color-scheme: dark)").matches?"dark":"light")}catch(e){}</script>
-<style>:root{color-scheme:light;--bg:#f7f8fd;--tx:#28377e;--mu:#566598;--ln:#303f91;--surface:#fff;--soft:#f0f2fc;--border:#d4daf1;--field:#b6bfdf;--on:#fff;--red:#b42318;--green:#17734a}
+<style>/* Colors de totes les apps Gesto, en mode clar i fosc (ESTIL.md, «Colors i tipografia»).
+   Font única: si canvies un color aquí, canvia a totes les apps. */
+:root{color-scheme:light;--bg:#f7f8fd;--tx:#28377e;--mu:#566598;--ln:#303f91;--surface:#fff;--soft:#f0f2fc;--border:#d4daf1;--field:#b6bfdf;--on:#fff;--red:#b42318;--green:#17734a}
 :root[data-theme=dark]{color-scheme:dark;--bg:#10152c;--tx:#e5e9ff;--mu:#adb8e5;--ln:#a1afff;--surface:#1b2447;--soft:#232f59;--border:#425080;--field:#6371a0;--on:#10152c;--red:#ff9992;--green:#84dbab}
+:root{--main-bg:#eaf0ff;--main-border:#afbfeb}
+:root[data-theme=dark]{--main-bg:#202e55;--main-border:#516798}
+
+/* Estil de base de les apps Gesto (ESTIL.md): tipografia, targetes, camps, botons, llistes, fitxes, inici de sessió.
+   El fan servir GestoCatalog, GestoTips i GestoAdmin. Va després de colors.css i abans de l'estil propi de cada app. */
 *{box-sizing:border-box}
 body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.5 system-ui,-apple-system,"Segoe UI",sans-serif}
 main{max-width:760px;margin:auto;padding:20px 16px 36px}
@@ -41,6 +48,8 @@ button:disabled{opacity:.55;cursor:not-allowed}
 main{width:100%;padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right))}
 .card,.grid,.grid>* ,label,.row>*{min-width:0}
 input,select,textarea,button,.button{max-width:100%;min-width:0}
+input[type=file]{width:100%}
+img,video,canvas{max-width:100%;height:auto}
 .card{overflow-wrap:anywhere}
 .grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr))}
 #login-panel{max-width:500px;margin-inline:auto}
@@ -52,6 +61,24 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
   html{-webkit-text-size-adjust:100%}
   button,.button{touch-action:manipulation}
 }
+/* Requadre principal de cada pantalla */
+.main-card{background:var(--main-bg);border-color:var(--main-border)}
+.main-card .card{background:var(--surface);box-shadow:none;border-radius:14px;padding:16px;margin:12px 0 0}
+.main-card .card h3:first-child{margin-top:0}
+.main-card .card h2{font-size:17px;margin:0 0 10px}
+.main-card>.card:first-of-type{margin-top:14px}
+/* Fitxes (diàlegs) */
+.sheet-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.sheet-head h2{margin:0}
+.sheet-part{border-top:1px solid var(--border);margin-top:14px;padding-top:12px}
+.sheet-part h3{margin:0 0 8px}
+.sheet-foot{border-top:1px solid var(--border);margin-top:14px;padding-top:12px}
+/* Botons d'icona (llapis, impressora…) */
+.icon-button{min-width:0;width:36px;min-height:36px;padding:0}
+.icon-button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+.icon-button.remove{border-color:var(--red)}
+.icon-button:disabled{opacity:.35}
+
 
 
 .tip-day{border-top:1px solid var(--border);padding:2px 0}
@@ -74,9 +101,6 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 .worker-state{display:block;color:var(--mu);font-size:14px}
 .worker-state.is-active{color:var(--green)}
 .add-worker{margin-top:6px}
-.icon-button{min-width:0;width:36px;min-height:36px;padding:0}
-.icon-button svg{width:20px;height:20px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
-.icon-button.remove{border-color:var(--red)}
 .result-meta{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
 .result-meta div{background:var(--soft);padding:10px 12px;border-radius:10px;display:grid}
 .result-meta span{color:var(--mu);font-size:14px}
@@ -121,13 +145,6 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 
 .worker-contact-actions:empty{display:none}
 /* Aspecte comú de les apps Gesto: requadre principal amb fons blau clar (com «Nova comanda») i blocs blancs a dins. */
-:root{--main-bg:#eaf0ff;--main-border:#afbfeb}
-:root[data-theme=dark]{--main-bg:#202e55;--main-border:#516798}
-.main-card{background:var(--main-bg);border-color:var(--main-border)}
-.main-card .card{background:var(--surface);box-shadow:none;border-radius:14px;padding:16px;margin:12px 0 0}
-.main-card .card h3:first-child{margin-top:0}
-.main-card .card h2{font-size:17px;margin:0 0 10px}
-.main-card>.card:first-of-type{margin-top:14px}
 
 /* Avisos flotants comuns de les apps Gesto (vegeu ESTIL.md → Avisos i errors). */
 #status:empty{display:none}
@@ -188,7 +205,7 @@ input,select,textarea,button,.button{max-width:100%;min-width:0}
 <body>
 <main>
 <header class="topbar">
-  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.11.2<span id="sync-state" role="status"></span></div></div>
+  <div class="brand"><h1>GestoTips</h1><div class="meta version">Versió 1.11.3<span id="sync-state" role="status"></span></div></div>
   <div class="top-actions">
     <div class="menu-anchor">
       <button id="menu-toggle" type="button" aria-label="Menú" aria-expanded="false" aria-controls="menu-panel" hidden><span aria-hidden="true">☰</span><span class="top-action-label" aria-hidden="true">Menú</span></button>
